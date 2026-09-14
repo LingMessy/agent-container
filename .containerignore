@@ -1,0 +1,13 @@
+.git
+.gitignore
+.containerignore
+node_modules
+.pnpm-store
+.npm
+.cache
+__pycache__
+*.py[cod]
+*.log
+coverage
+dist
+build

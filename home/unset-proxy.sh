@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# 检查是否以 source 方式运行（提示用户）
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "提示: 请使用 'source unset-proxy.sh' 或 '. unset-proxy.sh' 来让环境变量在当前终端生效！"
+# POSIX sh 没有通用的 source 检测接口；按文件名识别常规直接执行。
+# 脚本重命名后需同步此处文件名；调用方同名时可能误报。
+if [ "${0##*/}" = "unset-proxy.sh" ]; then
+    echo "提示: 请使用 '. ./unset-proxy.sh'（sh/Bash）或 'source ./unset-proxy.sh'（Bash） 来让环境变量在当前终端生效！"
     echo ""
 fi
 

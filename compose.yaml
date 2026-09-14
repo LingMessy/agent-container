@@ -1,26 +1,38 @@
 # compose.yaml - OCI Standard Compose file for AI Agent Execution Environment
 
 services:
-  agent-env:
+  agent-container:
     build:
       context: .
       dockerfile: Containerfile
-    image: localhost/agent-env:latest
-    container_name: agent-runtime
+      args:
+        USE_CHINA_APT_MIRROR: ${USE_CHINA_APT_MIRROR:-true}
+        USE_PROXY: ${USE_PROXY:-true}
+        PROXY_IP: ${PROXY_IP:-192.168.3.70}
+        PROXY_PORT: ${PROXY_PORT:-7890}
+        PROXY_USER: ${PROXY_USER:-}
+        PROXY_PASS: ${PROXY_PASS:-}
+        USE_CHINA_NPM_MIRROR: ${USE_CHINA_NPM_MIRROR:-true}
+        NODE_VERSION: ${NODE_VERSION:-26.8.2}
+        PNPM_VERSION: ${PNPM_VERSION:-12.4.1}
+        CODEX_VERSION: ${CODEX_VERSION:-0.154.0}
+        PI_VERSION: ${PI_VERSION:-0.85.1}
+    image: localhost/agent-container:${AGENT_CONTAINER_VERSION:-0.1.0}
+    container_name: agent-container-${AGENT_CONTAINER_VERSION:-0.1.0}
     
     # Podman Rootless 最佳实践：保持当前宿主机用户 ID 映射
     userns_mode: "keep-id"
     
     # SSH 端口映射 (宿主机 2233 -> 容器 22)
     ports:
-      - "2233:22"
+      - "${SSH_PORT:-2233}:22"
     
     # 容器内的工作目录
-    working_dir: /home/agent/app
+    working_dir: /home/agent/workspace
     
     # 挂载当前目录到容器内（:Z 标志用于 SELinux 兼容）
     volumes:
-      - .:/home/agent/app:Z
+      - .:/home/agent/workspace:Z
     
     # 环境变量配置
     environment:
