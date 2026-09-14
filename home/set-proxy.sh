@@ -7,7 +7,7 @@ if [ "${0##*/}" = "set-proxy.sh" ]; then
     echo ""
 fi
 
-# 配置参数（支持通过环境变量覆盖，方便灵活定制）
+# 默认代理参数，可通过环境变量覆盖
 PROXY_IP="${PROXY_IP:-192.168.3.70}"
 PROXY_PORT="${PROXY_PORT:-7890}"
 PROXY_USER="${PROXY_USER:-}"       # 如果需要用户名，可在此填写或通过环境变量传入
@@ -22,10 +22,10 @@ fi
 
 export http_proxy="http://${PROXY_AUTH}${PROXY_IP}:${PROXY_PORT}"
 export https_proxy="http://${PROXY_AUTH}${PROXY_IP}:${PROXY_PORT}"
-# 使用 socks5h:// 代替 socks5://，确保 DNS 解析也通过代理，防止 DNS 污染
+# socks5h 让代理服务器负责 DNS 解析
 export all_proxy="socks5h://${PROXY_AUTH}${PROXY_IP}:${PROXY_PORT}"
 
-# 优化后的 no_proxy：涵盖了本地、常见私有网段以及常见 K8s 内部域名
+# 本地、私有网络和 Kubernetes 集群地址不使用代理
 export no_proxy="localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local"
 
 # 同时设置大写形式（部分传统软件或 Java 程序需要大写环境变量）

@@ -1,4 +1,4 @@
-# 使用最新的 Debian 稳定版镜像
+# Debian Trixie 精简基础镜像
 FROM docker.io/library/debian:trixie-slim
 
 # OCI 标准元数据
@@ -7,7 +7,6 @@ LABEL org.opencontainers.image.title="AI Agent Execution Environment" \
       org.opencontainers.image.vendor="Local Engine" \
       org.opencontainers.image.licenses="MIT"
 
-# 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
@@ -17,10 +16,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # 直接执行容器命令时也能使用默认 Node.js 和 pnpm 全局命令
 ENV PATH="${FNM_DIR}:${FNM_DIR}/aliases/default/bin:${PNPM_HOME}/bin:${PNPM_HOME}:/home/agent/.local/bin:${PATH}"
 
-# 定义构建参数，默认启用国内 APT 源
+# 默认使用清华大学 Debian APT 镜像源
 ARG USE_CHINA_APT_MIRROR=true
 
-# 根据参数判断是否更换为清华大学 APT 源，并安装所需软件包（含 sudo 和 openssh-server）
+# 安装开发环境依赖；fnm 需要 curl、unzip，Codex 沙箱需要 bubblewrap
 RUN if [ "$USE_CHINA_APT_MIRROR" = "true" ]; then \
         sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
         sed -i 's/security.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources ; \
@@ -44,11 +43,10 @@ RUN if [ "$USE_CHINA_APT_MIRROR" = "true" ]; then \
 # 创建 sshd 运行所需目录
 RUN mkdir -p /run/sshd
 
-# 创建非 root 用户（符合 Podman Rootless 最佳实践）
+# 创建 UID 1000 的非 root 开发用户
 RUN useradd -m -s /bin/bash -u 1000 agent
 
-# 设置 root 和 agent 用户的密码
-# (此处设置 agent 密码为 agent123，root 密码为 root123，可根据需求自行更改)
+# 设置本地开发使用的默认密码
 RUN echo 'agent:agent123' | chpasswd && \
     echo 'root:root123' | chpasswd
 
@@ -68,7 +66,7 @@ RUN printf '\n' >> /home/agent/.bashrc \
 USER agent
 WORKDIR /home/agent/workspace
 
-# 构建阶段代理配置，默认值与 home/set-proxy.sh 保持一致
+# fnm 和 Node.js 下载代理
 ARG USE_PROXY=true
 ARG PROXY_IP=192.168.3.70
 ARG PROXY_PORT=7890
@@ -77,7 +75,7 @@ ARG PROXY_PASS=
 
 ARG NODE_VERSION=26.8.2
 
-# 使用 fnm 提供固定版本 Node.js
+# 通过 fnm 安装固定版本的 Node.js
 RUN set -eu; \
     mkdir -p "$PNPM_HOME/bin"; \
     if [ "$USE_PROXY" = "true" ]; then \
@@ -94,7 +92,7 @@ RUN set -eu; \
 ARG USE_CHINA_NPM_MIRROR=true
 ARG PNPM_VERSION=12.4.1
 
-# 使用 Corepack 固定 pnpm 版本，且设置 npm, pnpm 镜像
+# 安装 Corepack 和固定版本 pnpm，并按需配置 npm 国内镜像
 RUN set -eu; \
     eval "$(fnm env --shell bash)"; \
     if [ "$USE_CHINA_NPM_MIRROR" = "true" ]; then \
@@ -110,16 +108,17 @@ RUN set -eu; \
 
 ARG CODEX_VERSION=0.154.0
 
-# 分层安装 Agent，升级某个 Agent 时保留前面的 Node/pnpm 缓存
+# 安装固定版本 Codex
 RUN set -eu; \
     eval "$(fnm env --shell bash)"; \
     pnpm install --global "@openai/codex@$CODEX_VERSION"
 
 ARG PI_VERSION=0.85.1
 
+# 安装固定版本 Pi Agent，跳过包安装脚本
 RUN set -eu; \
     eval "$(fnm env --shell bash)"; \
     pnpm add --global --ignore-scripts "@earendil-works/pi-coding-agent@$PI_VERSION"
 
-# 默认进入交互式终端
+# 默认启动 Bash
 CMD ["/bin/bash"]

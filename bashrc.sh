@@ -14,7 +14,7 @@ function proxyenv() {
   ' _ "$proxyfile" "$@"
 }
 
-# 解决 corepack 的 pnpm setup 报错
+# 提前配置 pnpm 全局命令目录，避免 corepack 的 pnpm setup 报错
 export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
