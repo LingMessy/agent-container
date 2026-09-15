@@ -25,14 +25,15 @@ services:
     ports:
       - "${SSH_PORT:-2233}:22"
     
-    working_dir: /home/agent/workspace
+    working_dir: ${WORKSPACE_DIRD:-/home/agent/workspace}
     
     volumes:
-      - .:/home/agent/workspace:Z
+      - .:${WORKSPACE_DIRD:-/home/agent/workspace}:Z
     
     environment:
       - NODE_ENV=development
       - PYTHONUNBUFFERED=1
+      - WORKSPACE_DIRD=${WORKSPACE_DIRD:-/home/agent/workspace}
 
     stdin_open: true
     tty: true

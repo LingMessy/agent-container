@@ -10,6 +10,7 @@ LABEL org.opencontainers.image.title="AI Agent Execution Environment" \
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
+    WORKSPACE_DIRD="/home/agent/workspace" \
     FNM_DIR="/home/agent/.local/share/fnm" \
     PNPM_HOME="/home/agent/.local/share/pnpm"
 
@@ -64,7 +65,7 @@ RUN printf '\n' >> /home/agent/.bashrc \
 
 # 切换至非 root 用户并设置工作目录
 USER agent
-WORKDIR /home/agent/workspace
+WORKDIR ${WORKSPACE_DIRD}
 
 # fnm 和 Node.js 下载代理
 ARG USE_PROXY=true

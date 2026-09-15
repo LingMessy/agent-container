@@ -66,11 +66,11 @@ export PROXY_PORT=7890
 podman compose up --build -d
 ```
 
-当前项目目录会挂载到容器内的 `/home/agent/workspace`。
+当前项目目录会挂载到容器内的 `/home/agent/workspace`。可通过 `WORKSPACE_DIRD` 修改容器内的挂载位置和工作目录。
 
 ## 支持变量
 
-可配置的构建参数如下；Compose 支持同名宿主机环境变量或项目 `.env` 文件：
+可配置变量如下；Compose 支持通过同名宿主机环境变量或项目 `.env` 文件设置：
 
 | 参数 | 默认值 | 用途 |
 | --- | --- | --- |
@@ -81,6 +81,7 @@ podman compose up --build -d
 | `PROXY_PASS` | 空 | 代理密码，与用户名同时设置时启用认证 |
 | `USE_CHINA_NPM_MIRROR` | `true` | 使用 `https://registry.npmmirror.com` 配置 npm、Corepack 和 pnpm |
 | `USE_CHINA_APT_MIRROR` | `true` | 使用清华大学 Debian APT 镜像源 |
+| `WORKSPACE_DIRD` | `/home/agent/workspace` | 容器内的项目挂载位置和工作目录，并作为运行时环境变量暴露 |
 
 ## SSH 连接
 
