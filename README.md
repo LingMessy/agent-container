@@ -45,6 +45,12 @@ git clone https://github.com/LingMessy/agent-container.git
 cd agent-container
 ```
 
+为避免当前终端中残留的旧代理配置干扰后续拉取和构建，建议先运行一次：
+
+```bash
+source ./home/unset-proxy.sh
+```
+
 使用国内镜像拉取基础镜像：
 
 ```bash
