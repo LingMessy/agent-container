@@ -49,7 +49,7 @@ cd /path/to/your-project/.agent-container
 
 初始化脚本会复制 `Containerfile`、`compose.yaml`、本说明、`pull.sh`、`bashrc.sh`、`home/` 及配置模板和忽略规则到项目的 `.agent-container/`。目标项目目录必须存在且位于源仓库之外；如果 `.agent-container` 路径已存在，脚本提示并退出，不覆盖任何内容。脚本不会构建或启动容器。
 
-`.env` 从 `.env.example` 生成，并追加由项目目录名和绝对路径短哈希组成的 `COMPOSE_PROJECT_NAME`。`compose.yaml` 的顶层 `name` 显式使用这个变量，用于区分不同项目的容器、网络等资源。源仓库的本地 `.env` 和 `.git` 不会被复制。生成的 `.env` 权限为 `600`，并由随附的 `.gitignore` 和 `.containerignore` 排除；可提交 `.env.example` 供团队复用。项目移动后无需重新生成配置；如果将整个项目复制为另一个并行运行的实例，请修改其 `COMPOSE_PROJECT_NAME` 和 SSH 端口。
+`.env` 从 `.env.example` 生成，并追加由项目目录名和绝对路径短哈希组成的 `COMPOSE_PROJECT_NAME`。`compose.yaml` 使用这个变量设置容器名称，用于区分不同项目的容器。源仓库的本地 `.env` 和 `.git` 不会被复制。生成的 `.env` 权限为 `600`，并由随附的 `.gitignore` 和 `.containerignore` 排除；可提交 `.env.example` 供团队复用。项目移动后无需重新生成配置；如果将整个项目复制为另一个并行运行的实例，请修改其 `COMPOSE_PROJECT_NAME` 和 SSH 端口。
 
 如果已经在初始化后的 `.agent-container/` 中，直接从以下步骤开始。
 
