@@ -38,12 +38,20 @@ podman compose down
 
 ## 快速开始（国内环境）
 
-克隆项目：
+克隆此仓库，并将配置初始化到已有项目（需要 Bash 和 GNU 常用命令，包括 `sha256sum`）：
 
 ```bash
 git clone https://github.com/LingMessy/agent-container.git
 cd agent-container
+./init.sh /path/to/your-project
+cd /path/to/your-project/.agent-container
 ```
+
+初始化脚本会复制 `Containerfile`、`compose.yaml`、本说明、`pull.sh`、`bashrc.sh`、`home/` 及配置模板和忽略规则到项目的 `.agent-container/`。目标项目目录必须存在且位于源仓库之外；如果 `.agent-container` 路径已存在，脚本提示并退出，不覆盖任何内容。脚本不会构建或启动容器。
+
+`.env` 从 `.env.example` 生成，并追加由项目目录名和绝对路径短哈希组成的 `COMPOSE_PROJECT_NAME`，用于区分不同项目的容器和网络。源仓库的本地 `.env` 和 `.git` 不会被复制。生成的 `.env` 权限为 `600`，并由随附的 `.gitignore` 和 `.containerignore` 排除；可提交 `.env.example` 供团队复用。项目移动后无需重新生成配置；如果将整个项目复制为另一个并行运行的实例，请修改其 `COMPOSE_PROJECT_NAME` 和 SSH 端口。
+
+如果已经在初始化后的 `.agent-container/` 中，直接从以下步骤开始。
 
 为避免当前终端中残留的旧代理配置干扰后续拉取和构建，建议先运行一次：
 
@@ -54,25 +62,29 @@ source ./home/unset-proxy.sh
 使用国内镜像拉取基础镜像：
 
 ```bash
-chmod +x ./pull.sh && ./pull.sh
+bash ./pull.sh
 ```
 
-配置 SSH 端口和 fnm/Node.js 下载代理，然后构建并启动容器：
+编辑 `.agent-container/.env`，设置 SSH 端口和 fnm/Node.js 下载代理。例如：
+
+```dotenv
+SSH_PORT=2234
+USE_PROXY=true
+PROXY_IP=192.168.3.70
+PROXY_PORT=7890
+```
+
+多个项目同时运行时，需要为每个项目指定不同的 SSH 端口。Compose 会自动读取 `.env`，不需要 `source`；同名宿主机环境变量会覆盖文件中的值。
+
+在 `.agent-container/` 内构建并启动容器：
 
 ```bash
-# 设置 SSH 端口
-export SSH_PORT=2234
-
-# 设置代理
-export USE_PROXY=true
-export PROXY_IP=192.168.3.70
-export PROXY_PORT=7890
-
-# 构建镜像并启动容器
 podman compose up --build -d
 ```
 
-当前项目目录会挂载到容器内的 `/home/agent/workspace`。可通过 `WORKSPACE_DIRD` 修改容器内的挂载位置和工作目录。
+默认挂载 `.agent-container/` 的上级目录（整个项目）到容器内的 `/home/agent/workspace`。`WORKSPACE_SOURCE` 可以设置为相对 Compose 文件所在目录的路径或宿主机绝对路径；`WORKSPACE_DIRD` 控制容器内挂载位置和工作目录。构建上下文仍为 `.agent-container/`。
+
+如需直接在源仓库中启动，将 `.env.example` 复制为 `.env`，设置 `WORKSPACE_SOURCE=.` 后再运行 Compose。
 
 ## 支持变量
 
@@ -80,6 +92,8 @@ podman compose up --build -d
 
 | 参数 | 默认值 | 用途 |
 | --- | --- | --- |
+| `COMPOSE_PROJECT_NAME` | 初始化时生成 | 区分项目的容器和网络 |
+| `SSH_PORT` | `2233` | 宿主机 SSH 端口，多个项目应使用不同端口 |
 | `USE_PROXY` | `true` | 仅在安装 fnm 和 Node.js 时加载代理 |
 | `PROXY_IP` | `192.168.3.70` | 代理主机地址 |
 | `PROXY_PORT` | `7890` | 代理端口 |
@@ -87,6 +101,7 @@ podman compose up --build -d
 | `PROXY_PASS` | 空 | 代理密码，与用户名同时设置时启用认证 |
 | `USE_CHINA_NPM_MIRROR` | `true` | 使用 `https://registry.npmmirror.com` 配置 npm、Corepack 和 pnpm |
 | `USE_CHINA_APT_MIRROR` | `true` | 使用清华大学 Debian APT 镜像源 |
+| `WORKSPACE_SOURCE` | `..` | 宿主机挂载源，相对路径以 Compose 文件所在目录为基准 |
 | `WORKSPACE_DIRD` | `/home/agent/workspace` | 容器内的项目挂载位置和工作目录，并作为运行时环境变量暴露 |
 
 ## SSH 连接
@@ -104,6 +119,10 @@ ssh agent@localhost -p 2234
 
 ```text
 .
+├── init.sh          # 将运行配置初始化到目标项目的 .agent-container/（仅源仓库）
+├── .env.example     # 环境变量模板，初始化时生成本地 .env
+├── .gitignore       # 忽略本地 .env
+├── .containerignore # 排除不需要进入构建上下文的文件
 ├── Containerfile    # 镜像构建定义
 ├── compose.yaml     # 本地开发容器编排配置
 ├── pull.sh          # 用于通过国内镜像拉取基础镜像的脚本

@@ -16,7 +16,6 @@ services:
         CODEX_VERSION: ${CODEX_VERSION:-0.154.0}
         PI_VERSION: ${PI_VERSION:-0.85.1}
     image: localhost/agent-container:${AGENT_CONTAINER_VERSION:-0.1.0}
-    container_name: agent-container-${AGENT_CONTAINER_VERSION:-0.1.0}
     
     # 将容器用户映射到当前 Rootless Podman 用户
     userns_mode: "keep-id"
@@ -28,7 +27,7 @@ services:
     working_dir: ${WORKSPACE_DIRD:-/home/agent/workspace}
     
     volumes:
-      - .:${WORKSPACE_DIRD:-/home/agent/workspace}:Z
+      - "${WORKSPACE_SOURCE:-..}:${WORKSPACE_DIRD:-/home/agent/workspace}:Z"
     
     environment:
       - NODE_ENV=development

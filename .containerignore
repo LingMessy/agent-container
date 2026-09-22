@@ -1,6 +1,7 @@
 .git
 .gitignore
 .containerignore
+.env
 node_modules
 .pnpm-store
 .npm
