@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # Debian Trixie 精简基础镜像
 FROM docker.io/library/debian:trixie-slim
 
@@ -21,7 +23,11 @@ ENV PATH="${FNM_DIR}:${FNM_DIR}/aliases/default/bin:${PNPM_HOME}/bin:${PNPM_HOME
 ARG USE_CHINA_APT_MIRROR=true
 
 # 安装开发环境依赖；fnm 需要 curl、unzip，Codex 沙箱需要 bubblewrap
-RUN if [ "$USE_CHINA_APT_MIRROR" = "true" ]; then \
+# 保留下载的包和索引供后续构建复用；锁定缓存以避免并发 APT 操作冲突
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && if [ "$USE_CHINA_APT_MIRROR" = "true" ]; then \
         sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
         sed -i 's/security.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources ; \
     fi \
@@ -37,9 +43,7 @@ RUN if [ "$USE_CHINA_APT_MIRROR" = "true" ]; then \
     bubblewrap \
     unzip \
     sudo \
-    openssh-server \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    openssh-server
 
 # 创建 sshd 运行所需目录
 RUN mkdir -p /run/sshd
